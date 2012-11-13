@@ -3,3 +3,4 @@ FactoryGirl.define do
     name 'Promo'
   end
 end
+

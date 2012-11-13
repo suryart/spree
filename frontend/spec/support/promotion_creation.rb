@@ -1,11 +1,11 @@
 module PromotionCreation
   def create_per_product_promotion product_name, discount_amount, event = "Add to cart"
-    promotion_name = "Bundle d#{discount_amount}"
 
     visit spree.admin_path
     click_link "Promotions"
     click_link "New Promotion"
 
+    promotion_name = "Bundle d#{discount_amount}"
     fill_in "Name", :with => promotion_name
     select2 event, :from => "Event Name"
     click_button "Create"
@@ -55,6 +55,22 @@ module PromotionCreation
 
     Spree::Promotion.find_by_name promotion_name
   end
+
+  def create_basic_coupon_promotion(code)
+    promo = Spree::Promotion.create!({
+      :name => "One Two",
+      :event_name => "spree.checkout.coupon_code_added",
+      :code => "onetwo",
+      # So that we don't get caught out by the feature where a promotion
+      # cannot be applied to an order when an order is older than the promotion
+      :created_at => 1.day.ago,
+      :starts_at => 1.day.ago,
+    }, :without_protection => true)
+    action = Spree::Promotion::Actions::CreateAdjustment.create!({:activator_id => promo.id}, :without_protection => true)
+    action.calculator = create(:calculator)
+    action.save!
+  end
+
 end
 
 
