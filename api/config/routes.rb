@@ -60,6 +60,8 @@ Spree::Core::Engine.routes.prepend do
           get :jstree
         end
       end
+
+      resources :taxons, :only => [:index]
     end
     resources :inventory_units, :only => [:show, :update]
   end
