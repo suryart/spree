@@ -1,7 +1,7 @@
 require 'rails/generators'
-require 'highline/import'
-require 'bundler'
-require 'bundler/cli'
+# require 'highline/import'
+# require 'bundler'
+# require 'bundler/cli'
 
 module Spree
   class InstallGenerator < Rails::Generators::Base
