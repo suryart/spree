@@ -57,6 +57,10 @@ module Spree
           true
         end
       end
+
+      def config_locale
+        Spree::Frontend::Config[:locale]
+      end
   end
 end
 

@@ -75,6 +75,7 @@ module Spree
 
         def set_user_language
           locale = session[:locale]
+          locale ||= config_locale if respond_to?(:config_locale)
           locale ||= Rails.application.config.i18n.default_locale
           locale ||= I18n.default_locale unless I18n.available_locales.include?(locale.try(:to_sym))
           I18n.locale = locale.to_sym
