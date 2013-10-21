@@ -4,11 +4,13 @@ module Spree
       before_filter :stock_location, except: [:update, :destroy]
 
       def index
+        authorize! :read, StockItem
         @stock_items = scope.ransack(params[:q]).result.page(params[:page]).per(params[:per_page])
         respond_with(@stock_items)
       end
 
       def show
+        authorize! :read, StockItem
         @stock_item = scope.find(params[:id])
         respond_with(@stock_item)
       end
@@ -41,7 +43,10 @@ module Spree
           params[:stock_item].delete(:count_on_hand)
         end
 
-        if @stock_item.adjust_count_on_hand(count_on_hand)
+        updated = params[:stock_item][:force] ? @stock_item.set_count_on_hand(count_on_hand)
+                                              : @stock_item.adjust_count_on_hand(count_on_hand)
+
+        if updated
           respond_with(@stock_item, status: 200, default_template: :show)
         else
           invalid_resource!(@stock_item)
@@ -63,7 +68,8 @@ module Spree
       end
 
       def scope
-        @stock_location.stock_items.includes(:variant => :product)
+        includes = {:variant => [{ :option_values => :option_type }, :product] }
+        @stock_location.stock_items.includes(includes)
       end
     end
   end

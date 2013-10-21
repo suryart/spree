@@ -63,6 +63,7 @@ en:
         zipcode: Shipping address zipcode
       spree/payment:
         amount: Amount
+        one: "Payment"
       spree/payment_method:
         name: Name
       spree/product:
@@ -148,9 +149,15 @@ en:
       spree/payment:
         one: Payment
         other: Payments
+      spree/payment_method:
+        one: Payment Method
+        other: Payment Methods
       spree/product:
         one: Product
         other: Products
+      spree/promotion:
+        one: Promotion
+        other: Promotions
       spree/property:
         one: Property
         other: Properties
@@ -169,9 +176,18 @@ en:
       spree/shipping_category:
         one: Shipping Category
         other: Shipping Categories
+      spree/shipping_method:
+        one: Shipping Method
+        other: Shipping Methods
       spree/state:
         one: State
         other: States
+      spree/stock_location:
+        one: Stock Location
+        other: Stock Locations
+      spree/stock_transfer:
+        one: Stock Transfer
+        other: Stock Transfers
       spree/tax_category:
         one: Tax Category
         other: Tax Categories
@@ -184,6 +200,9 @@ en:
       spree/taxonomy:
         one: Taxonomy
         other: Taxonomies
+      spree/tracker:
+        one: Tracker
+        other: Trackers
       spree/user:
         one: User
         other: Users
@@ -193,6 +212,16 @@ en:
       spree/zone:
         one: Zone
         other: Zones
+    errors:
+      models:
+        spree/classification:
+          attributes:
+            taxon_id:
+              already_linked: "is already linked to this product"
+        spree/credit_card:
+          attributes:
+            base:
+              card_expired: "Card has expired"
   devise:
     confirmations:
       confirmed: Your account was successfully confirmed. You are now signed in.
@@ -295,6 +324,7 @@ en:
         reports: "Reports"
         configuration: "Configuration"
         promotions: "Promotions"
+        users: "Users"
     administration: Administration
     agree_to_privacy_policy: Agree to Privacy Policy
     agree_to_terms_of_service: Agree to Terms of Service
@@ -343,7 +373,7 @@ en:
     back_to_shipping_categories: Back To Shipping Categories
     back_to_shipping_methods_list: Back To Shipping Methods List
     back_to_states_list: Back To States List
-    back_to_stock_locations_list: Back to Stock Movements List
+    back_to_stock_locations_list: Back to Stock Locations List
     back_to_stock_movements_list: Back to Stock Movements List
     back_to_stock_transfers_list: Back to Stock Transfers List
     back_to_store: Go Back To Store
@@ -353,6 +383,7 @@ en:
     back_to_users_list: Back To Users List
     back_to_zones_list: Back To Zones List
     backorderable: Backorderable
+    backorders_allowed: backorders allowed
     balance_due: Balance Due
     bill_address: Bill Address
     billing: Billing
@@ -369,6 +400,7 @@ en:
     capture: Capture
     card_code: Card Code
     card_number: Card Number
+    card_type: Brand
     card_type_is: Card type is
     cart: Cart
     categories: Categories
@@ -448,6 +480,7 @@ en:
     date: Date
     date_completed: Date Completed
     date_picker:
+      first_day: 0
       format: ! '%Y/%m/%d'
       js_format: yy/mm/dd
     date_range: Date Range
@@ -569,6 +602,7 @@ en:
     insufficient_stock: Insufficient stock available, only %{on_hand} remaining
     intercept_email_address: Intercept Email Address
     intercept_email_instructions: Override email recipient and replace with this address.
+    internal_name: Internal Name
     invalid_payment_provider: Invalid payment provider.
     invalid_promotion_action: Invalid promotion action.
     invalid_promotion_rule: Invalid promotion rule.
@@ -584,6 +618,7 @@ en:
       operators:
         gt: greater than
         gte: greater than or equal to
+    items_cannot_be_shipped: We are unable to calculate shipping rates for the selected items.
     jirafe: Jirafe
     landing_page_rule:
       path: Path
@@ -610,7 +645,6 @@ en:
     login_name: Login
     logout: Logout
     look_for_similar_items: Look for similar items
-    maestro_or_solo_cards: Maestro/Solo cards
     mail_method_settings: Mail Method Settings
     mail_methods: Mail Methods
     make_refund: Make refund
@@ -662,12 +696,15 @@ en:
     no_actions_added: No actions added
     no_orders_found: No orders found
     no_payment_methods_found: No payment methods found
+    no_pending_payments: No pending payments
     no_products_found: No products found
     no_promotions_found: No promotions found
     no_results: No results
     no_rules_added: No rules added
+    no_resource_found: ! 'No %{resource} found'
     no_shipping_methods_found: No shipping methods found
     no_trackers_found: No Trackers Found
+    no_stock_locations_found: No stock locations found
     no_tracking_present: No tracking details provided.
     none: None
     normal_amount: Normal Amount
@@ -686,6 +723,7 @@ en:
     open: Open
     open_all_adjustments: Open All Adjustments
     option_type: Option Type
+    option_type_placeholder: Choose an option type
     option_types: Option Types
     option_value: Option Value
     option_values: Option Values
@@ -718,6 +756,7 @@ en:
     order_number: Order
     order_populator:
       out_of_stock: ! '%{item} is out of stock.'
+      selected_quantity_not_available: ! 'Selected quantity of %{item} is not available.'
       please_enter_reasonable_quantity: Please enter a reasonable quantity.
     order_processed_successfully: Your order has been processed successfully
     order_state:
@@ -955,8 +994,9 @@ en:
     special_instructions: Special Instructions
     split: Split
     spree_gateway_error_flash_for_checkout: There was a problem with your payment information. Please check your information and try again.
+    ssl:
+      change_protocol: "Please switch to using HTTP (rather than HTTPS) and retry this request."
     start: Start
-    start_date: Valid from
     state: State
     state_based: State Based
     states: States
@@ -966,6 +1006,7 @@ en:
     stock_location_info: Stock location info
     stock_locations: Stock Locations
     stock_management: Stock Management
+    stock_management_requires_a_stock_location: Please create a stock location in order to manage stock.
     stock_movements: Stock Movements
     stock_movements_for_stock_location: Stock Movements for %{stock_location_name}
     stock_successfully_transferred: Stock was successfully transferred between locations.
@@ -1005,6 +1046,7 @@ en:
         subject: Test Mail
     test_mode: Test Mode
     thank_you_for_your_order: Thank you for your business.  Please print out a copy of this confirmation page for your records.
+    there_are_no_items_for_this_order: There are no items for this order. Please add an item to the order to continue.
     there_were_problems_with_the_following_fields: There were problems with the following fields
     thumbnail: Thumbnail
     time: Time
@@ -1044,6 +1086,7 @@ en:
       must_be_non_negative: must be a non-negative value
     value: Value
     variant: Variant
+    variant_placeholder: Choose a variant
     variants: Variants
     version: Version
     void: Void

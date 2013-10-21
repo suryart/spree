@@ -62,6 +62,25 @@ describe Spree::Shipment do
     shipment.item_cost.should eql(10.0)
   end
 
+  context "manifest" do
+    let(:order) { Spree::Order.create }
+    let(:variant) { create(:variant) }
+    let!(:line_item) { order.contents.add variant }
+    let!(:shipment) { order.create_proposed_shipments.first }
+
+    it "returns variant expected" do
+      expect(shipment.manifest.first.variant).to eq variant
+    end
+
+    context "variant was removed" do
+      before { variant.product.destroy }
+
+      it "still returns variant expected" do
+        expect(shipment.manifest.first.variant).to eq variant
+      end
+    end
+  end
+
   context 'shipping_rates' do
     let(:shipment) { create(:shipment) }
     let(:shipping_method1) { create(:shipping_method) }
@@ -78,7 +97,8 @@ describe Spree::Shipment do
     end
 
     context 'refresh_rates' do
-      let(:mock_estimator) { mock('estimator', shipping_rates: shipping_rates) }
+      let(:mock_estimator) { double('estimator', shipping_rates: shipping_rates) }
+      before { shipment.stub(:can_get_rates?){ true } }
 
       it 'should request new rates, and maintain shipping_method selection' do
         Spree::Stock::Estimator.should_receive(:new).with(shipment.order).and_return(mock_estimator)
@@ -100,6 +120,21 @@ describe Spree::Shipment do
         shipment.shipping_rates.delete_all
         shipment.stub(shipped?: true)
         shipment.refresh_rates.should == []
+      end
+
+      it "can't get rates without a shipping address" do
+        shipment.order(ship_address: nil)
+        expect(shipment.refresh_rates).to eq([])
+      end
+
+      context 'to_package' do
+        it 'should use symbols for states when adding contents to package' do
+          shipment.stub_chain(:inventory_units, includes: [ build(:inventory_unit, variant: variant, state: 'on_hand'),
+                                                            build(:inventory_unit, variant: variant, state: 'backordered') ] )
+          package = shipment.to_package
+          package.on_hand.count.should eq 1
+          package.backordered.count.should eq 1
+        end
       end
     end
   end
@@ -228,7 +263,7 @@ describe Spree::Shipment do
     end
 
     it 'restocks the items' do
-      shipment.stub_chain(:inventory_units, includes: [mock_model(Spree::InventoryUnit, variant: variant)])
+      shipment.stub_chain(:inventory_units, :joins, includes: [mock_model(Spree::InventoryUnit, variant: variant)])
       shipment.stock_location = mock_model(Spree::StockLocation)
       shipment.stock_location.should_receive(:restock).with(variant, 1, shipment)
       shipment.after_cancel
@@ -248,7 +283,7 @@ describe Spree::Shipment do
     end
 
     it 'unstocks them items' do
-      shipment.stub_chain(:inventory_units, includes: [mock_model(Spree::InventoryUnit, variant: variant)])
+      shipment.stub_chain(:inventory_units, :joins, includes: [mock_model(Spree::InventoryUnit, variant: variant)])
       shipment.stock_location = mock_model(Spree::StockLocation)
       shipment.stock_location.should_receive(:unstock).with(variant, 1, shipment)
       shipment.after_resume
@@ -286,7 +321,7 @@ describe Spree::Shipment do
     end
 
     it "should send a shipment email" do
-      mail_message = mock 'Mail::Message'
+      mail_message = double 'Mail::Message'
       shipment_id = nil
       Spree::ShipmentMailer.should_receive(:shipped_email) { |*args|
         shipment_id = args[0]
@@ -380,6 +415,29 @@ describe Spree::Shipment do
       shipment.tracking = '1Z12345'
 
       shipment.tracking_url.should == :some_url
+    end
+  end
+
+  context "set up new inventory units" do
+    let(:variant) { double("Variant", id: 9) }
+    let(:inventory_units) { double }
+    let(:params) do
+      { variant_id: variant.id, state: 'on_hand', order_id: order.id }
+    end
+
+    before { shipment.stub inventory_units: inventory_units }
+
+    it "associates variant and order" do
+      expect(inventory_units).to receive(:create).with(params, without_protection: true)
+      unit = shipment.set_up_inventory('on_hand', variant, order)
+    end
+  end
+
+  # Regression test for #3349
+  context "#destroy" do
+    it "destroys linked shipping_rates" do
+      reflection = Spree::Shipment.reflect_on_association(:shipping_rates)
+      reflection.options[:dependent] = :destroy
     end
   end
 end

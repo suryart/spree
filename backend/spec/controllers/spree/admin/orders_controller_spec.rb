@@ -7,16 +7,13 @@ class OrderSpecificAbility
   include CanCan::Ability
 
   def initialize(user)
-    can [:admin, :index], Spree::Order
-    can :manage, Spree::Order, :number => 'R987654321'
+    can [:admin, :manage], Spree::Order, :number => 'R987654321'
   end
 end
 
 describe Spree::Admin::OrdersController do
 
-  before { Spree::Order.stub :find_by_number! => order }
-
-  context "without auth" do
+  context "with authorization" do
     stub_authorization!
 
     before do
@@ -29,17 +26,49 @@ describe Spree::Admin::OrdersController do
     end
 
     let(:order) { mock_model(Spree::Order, :complete? => true, :total => 100, :number => 'R123456789') }
+    before { Spree::Order.stub :find_by_number! => order }
 
     context "#fire" do
-      it "should fire the requested event on the payment" do
-        order.should_receive(:foo).and_return true
+      before(:each) do
+        order.stub :foo => true
+      end
+
+      it "should receive state_events" do
+        order.should_receive(:state_events).and_return([:foo])
         spree_put :fire, {:id => "R1234567", :e => "foo"}
       end
 
-      it "should respond with a flash message if the event cannot be fired" do
-        order.stub :foo => false
-        spree_put :fire, {:id => "R1234567", :e => "foo"}
-        flash[:error].should_not be_nil
+      context 'params[:e] includes in state_events' do
+        before(:each) do
+          order.stub(:state_events).and_return([:foo])
+        end
+
+        it "should fire the requested event on the payment" do
+          order.should_receive(:foo).and_return true
+          spree_put :fire, {:id => "R1234567", :e => "foo"}
+        end
+
+        it "should respond with a flash message if the event cannot be fired" do
+          order.stub :foo => false
+          spree_put :fire, {:id => "R1234567", :e => "foo"}
+          flash[:error].should_not be_nil
+        end
+      end
+
+      context 'params[:e] not includes in state_events' do
+        before(:each) do
+          order.stub(:state_events).and_return([:bar])
+        end
+        
+        it "should not fire the requested event on the payment" do
+          order.should_not_receive(:foo)
+          spree_put :fire, {:id => "R1234567", :e => "foo"}
+        end
+
+        it "should respond with a flash message if the event cannot be fired" do
+          spree_put :fire, {:id => "R1234567", :e => "foo"}
+          flash[:error].should_not be_nil
+        end
       end
     end
 
@@ -50,6 +79,29 @@ describe Spree::Admin::OrdersController do
         assigns[:orders].limit_value.should == 10
       end
     end
+
+    # Test for #3346
+    context "#new" do
+      it "a new order has the current user assigned as a creator" do
+        spree_get :new
+        assigns[:order].created_by.should == controller.try_spree_current_user
+      end
+    end
+
+    # Regression test for #3684
+    context "#edit" do
+      it "does not refresh rates if the order is complete" do
+        order.stub :complete? => true
+        order.should_not_receive :refresh_shipment_rates
+        spree_get :edit, :id => order.number
+      end
+
+      it "does refresh the rates if the order is incomplete" do
+        order.stub :complete? => false
+        order.should_receive :refresh_shipment_rates
+        spree_get :edit, :id => order.number
+      end
+    end
   end
 
   context '#authorize_admin' do
@@ -57,6 +109,7 @@ describe Spree::Admin::OrdersController do
     let(:order) { create(:completed_order_with_totals, :number => 'R987654321') }
 
     before do
+      Spree::Order.stub :find_by_number! => order
       controller.stub :spree_current_user => user
     end
 

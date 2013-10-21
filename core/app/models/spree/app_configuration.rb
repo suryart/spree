@@ -22,7 +22,7 @@ module Spree
 
     # Alphabetized to more easily lookup particular preferences
     preference :address_requires_state, :boolean, default: true # should state/state_name be required
-    preference :admin_interface_logo, :string, default: 'admin/bg/spree_50.png'
+    preference :admin_interface_logo, :string, default: 'logo/spree_50.png'
     preference :admin_products_per_page, :integer, default: 10
     preference :allow_backorder_shipping, :boolean, default: false # should only be true if you don't need to track inventory
     preference :allow_checkout_on_gateway_error, :boolean, default: false
@@ -32,6 +32,7 @@ module Spree
     preference :allow_ssl_in_staging, :boolean, default: true
     preference :alternative_billing_phone, :boolean, default: false # Request extra phone for bill addr
     preference :alternative_shipping_phone, :boolean, default: false # Request extra phone for ship addr
+    preference :always_include_confirm_step, :boolean, default: false # Ensures confirmation step is always in checkout_progress bar, but does not force a confirm step if your payment methods do not support it.
     preference :always_put_site_name_in_title, :boolean, default: true
     preference :auto_capture, :boolean, default: false # automatically capture the credit card (as opposed to just authorize and capture later)
     preference :cache_static_content, :boolean, default: true
@@ -51,7 +52,7 @@ module Spree
     preference :hide_cents, :boolean, default: false
     preference :last_check_for_spree_alerts, :string, default: nil
     preference :layout, :string, default: 'spree/layouts/spree_application'
-    preference :logo, :string, default: 'admin/bg/spree_50.png'
+    preference :logo, :string, default: 'logo/spree_50.png'
     preference :max_level_in_taxons_menu, :integer, default: 1 # maximum nesting level in taxons menu
     preference :orders_per_page, :integer, default: 15
     preference :prices_inc_tax, :boolean, default: false
@@ -86,6 +87,7 @@ module Spree
 
     # Default mail headers settings
     preference :enable_mail_delivery, :boolean, :default => false
+    preference :send_core_emails, :boolean, :default => true
     preference :mails_from, :string, :default => 'spree@example.com'
     preference :mail_bcc, :string, :default => 'spree@example.com'
     preference :intercept_email, :string, :default => nil

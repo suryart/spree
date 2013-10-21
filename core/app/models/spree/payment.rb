@@ -1,14 +1,18 @@
 module Spree
   class Payment < ActiveRecord::Base
     include Spree::Payment::Processing
+
+    IDENTIFIER_CHARS = (('A'..'Z').to_a + ('0'..'9').to_a - %w(0 1 I O)).freeze
+
     belongs_to :order, class_name: 'Spree::Order'
-    belongs_to :source, polymorphic: true, validate: true
+    belongs_to :source, polymorphic: true
     belongs_to :payment_method, class_name: 'Spree::PaymentMethod'
 
     has_many :offsets, class_name: "Spree::Payment", foreign_key: :source_id, conditions: "source_type = 'Spree::Payment' AND amount < 0 AND state = 'completed'"
     has_many :log_entries, as: :source
 
-    before_save :set_unique_identifier
+    before_validation :validate_source
+    before_create :set_unique_identifier
 
     after_save :create_payment_profile, if: :profiles_supported?
 
@@ -31,10 +35,12 @@ module Spree
 
     after_rollback :persist_invalid
 
+    validates :amount, numericality: true
+
     def persist_invalid
       return unless ['failed', 'invalid'].include?(state)
       state_will_change!
-      save 
+      save
     end
 
     # order state machine (see http://github.com/pluginaweek/state_machine/tree/master for details)
@@ -73,6 +79,16 @@ module Spree
     end
     alias display_amount money
 
+    def amount=(amount)
+      self[:amount] =
+        case amount
+        when String
+          separator = I18n.t('number.currency.format.separator')
+          number    = amount.delete("^0-9-#{separator}").tr(separator, '.')
+          number.to_d if number.present?
+        end || amount
+    end
+
     def offsets_total
       offsets.pluck(:amount).sum
     end
@@ -105,6 +121,16 @@ module Spree
 
     private
 
+      def validate_source
+        if source && !source.valid?
+          source.errors.each do |field, error|
+            field_name = I18n.t("activerecord.attributes.#{source.class.to_s.underscore}.#{field}")
+            self.errors.add(Spree.t(source.class.to_s.demodulize.underscore), "#{field_name} #{error}")
+          end
+        end
+        return !errors.present?
+      end
+
       def profiles_supported?
         payment_method.respond_to?(:payment_profiles_supported?) && payment_method.payment_profiles_supported?
       end
@@ -133,15 +159,13 @@ module Spree
       # and this is it. Related to #1998.
       # See https://github.com/spree/spree/issues/1998#issuecomment-12869105
       def set_unique_identifier
-        chars = [('A'..'Z').to_a, ('0'..'9').to_a].flatten - %w(0 1 I O)
-        identifier = ''
-        8.times { identifier << chars[rand(chars.length)] }
-        if Spree::Payment.exists?(identifier: identifier)
-          # Call it again, we've got a duplicate ID.
-          set_unique_identifier
-        else
-          self.identifier = identifier
-        end
+        begin
+          self.identifier = generate_identifier
+        end while self.class.exists?(identifier: self.identifier)
+      end
+
+      def generate_identifier
+        Array.new(8){ IDENTIFIER_CHARS.sample }.join
       end
   end
 end

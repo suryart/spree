@@ -6,7 +6,7 @@ require 'spec_helper'
 describe Spree::Adjustment do
 
   let(:order) { mock_model(Spree::Order, update!: nil) }
-  let(:adjustment) { Spree::Adjustment.new }
+  let(:adjustment) { Spree::Adjustment.create(:label => "Adjustment", :amount => 5) }
 
   describe "scopes" do
     let!(:arbitrary_adjustment) { create(:adjustment, source: nil, label: "Arbitrary") }
@@ -19,7 +19,7 @@ describe Spree::Adjustment do
 
   context "#update!" do
     context "when originator present" do
-      let(:originator) { mock("originator", update_adjustment: nil) }
+      let(:originator) { double("originator", update_adjustment: nil) }
       before do
         originator.stub update_amount: true
         adjustment.stub originator: originator, label: 'adjustment', amount: 0
@@ -50,11 +50,28 @@ describe Spree::Adjustment do
     end
   end
 
+  context "#promotion?" do
+    it "returns false if not promotion adjustment" do
+      expect(adjustment.promotion?).to eq false
+    end
+
+    it "returns true if promotion adjustment" do
+      adjustment.originator_type = "Spree::PromotionAction"
+      expect(adjustment.promotion?).to eq true
+    end
+  end
+
   context "#eligible? after #set_eligibility" do
     context "when amount is 0" do
       before { adjustment.amount = 0 }
       it "should be eligible if mandatory?" do
         adjustment.mandatory = true
+        adjustment.set_eligibility
+        adjustment.should be_eligible
+      end
+      it "should be eligible if `promotion?` even if not `mandatory?`" do
+        adjustment.should_receive(:promotion?).and_return(true)
+        adjustment.mandatory = false
         adjustment.set_eligibility
         adjustment.should be_eligible
       end
